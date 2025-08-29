@@ -1,6 +1,6 @@
-const { contextBridge } = require("electron");
+// electron/preload.js
+const { contextBridge, ipcRenderer } = require("electron");
 
-// Expose safe APIs to the renderer (React)
 contextBridge.exposeInMainWorld("electronAPI", {
-  ping: () => "pong",
+  resizeWindow: (mode) => ipcRenderer.send("resize-window", mode),
 });

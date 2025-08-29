@@ -1,8 +1,11 @@
-const { app, BrowserWindow } = require("electron");
+// electron/main.js
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 
+let mainWindow;
+
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -10,23 +13,28 @@ function createWindow() {
     },
   });
 
-  // Load Vite dev server (React) during development
+  // In dev, load Vite dev server; in prod, load built files
   if (process.env.NODE_ENV === "development") {
-    win.loadURL("http://localhost:5173");
+    mainWindow.loadURL("http://localhost:5173");
   } else {
-    // Load built React files in production
-    win.loadFile(path.join(__dirname, "../dist/index.html"));
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 }
 
-app.whenReady().then(() => {
-  createWindow();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+// IPC handler for resizing
+ipcMain.on("resize-window", (_, size) => {
+  if (!mainWindow) return;
+  if (size === "compact") {
+    mainWindow.setSize(400, 300);
+  } else if (size === "expanded") {
+    mainWindow.setSize(1200, 800);
+  }
 });
 
+app.on("ready", createWindow);
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
